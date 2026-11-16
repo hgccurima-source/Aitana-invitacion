@@ -376,62 +376,36 @@
     </div>
 
     <script>
-        let audioCtx = null;
+        // Reproduce el archivo musica.mp3 ubicado junto a index.html.
+        const musicAudio = new Audio("musica.mp3");
+        musicAudio.loop = true;
+        musicAudio.preload = "auto";
         let isPlaying = false;
-        let melodyInterval = null;
 
-        function initAudio() {
-            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            if (audioCtx.state === 'suspended') audioCtx.resume();
-        }
-
-        function playMusicBoxNote(freq, time = 0) {
-            if (!audioCtx) return;
-            setTimeout(() => {
-                try {
-                    const osc = audioCtx.createOscillator();
-                    const gain = audioCtx.createGain();
-                    osc.type = 'sine';
-                    osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-                    gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
-                    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 2.5);
-                    osc.connect(gain);
-                    gain.connect(audioCtx.destination);
-                    osc.start();
-                    osc.stop(audioCtx.currentTime + 2.5);
-                } catch (e) {}
-            }, time);
-        }
-
-        function playMelody() {
-            initAudio();
+        async function playMelody() {
             if (isPlaying) return;
-            isPlaying = true;
-            document.getElementById('musicToggle').classList.add('playing');
 
-            const notes = [
-                523.25, 659.25, 783.99, 1046.50,
-                880.00, 783.99, 659.25, 523.25,
-                587.33, 698.46, 880.00, 1046.50,
-                783.99, 659.25, 587.33, 523.25
-            ];
-
-            function playSequence() {
-                if (!isPlaying) return;
-                notes.forEach((note, i) => playMusicBoxNote(note, i * 300));
+            try {
+                await musicAudio.play();
+                isPlaying = true;
+                document.getElementById('musicToggle').classList.add('playing');
+                document.getElementById('musicToggle').setAttribute('aria-pressed', 'true');
+            } catch (error) {
+                isPlaying = false;
+                document.getElementById('musicToggle').classList.remove('playing');
+                document.getElementById('musicToggle').setAttribute('aria-pressed', 'false');
+                console.error("No se pudo reproducir musica.mp3:", error);
             }
-
-            playSequence();
-            melodyInterval = setInterval(playSequence, 5000);
         }
 
         function toggleMusic() {
-            initAudio();
             const toggleBtn = document.getElementById('musicToggle');
+
             if (isPlaying) {
+                musicAudio.pause();
                 isPlaying = false;
-                clearInterval(melodyInterval);
                 toggleBtn.classList.remove('playing');
+                toggleBtn.setAttribute('aria-pressed', 'false');
             } else {
                 playMelody();
             }
