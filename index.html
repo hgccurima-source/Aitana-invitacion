@@ -40,6 +40,8 @@ main{width:100%;min-height:100svh;display:grid;place-items:center;padding:90px 1
 :focus-visible{outline:2px solid #805b6c;outline-offset:4px}
 .card{max-height:calc(100svh - 100px);overflow-wrap:anywhere}.calendar{min-height:44px;display:inline-flex;align-items:center;justify-content:center}.reset{min-height:44px}
 @media(max-height:450px){main{padding:65px 18px 35px}.card{position:fixed;max-height:calc(100svh - 100px);top:calc(50% + 25px)}}
+html, body, .card { scrollbar-width: none; -ms-overflow-style: none; }
+html::-webkit-scrollbar, body::-webkit-scrollbar, .card::-webkit-scrollbar { display: none; }
 </style>
 </head>
 <body>
@@ -59,7 +61,7 @@ main{width:100%;min-height:100svh;display:grid;place-items:center;padding:90px 1
 <script>
 const musicAudio = new Audio('musica.mp3');
 musicAudio.loop = true;
-musicAudio.preload = 'none';
+musicAudio.preload = 'auto';
 const musicBtn = document.getElementById('musicToggle');
 const wrapper = document.getElementById('envelopeWrapper');
 const card = document.getElementById('letterCard');
