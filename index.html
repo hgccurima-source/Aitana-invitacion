@@ -61,7 +61,7 @@ html::-webkit-scrollbar, body::-webkit-scrollbar, .card::-webkit-scrollbar { dis
 <script>
 const musicAudio = new Audio('musica.mp3');
 musicAudio.loop = true;
-const musicStart = 35;
+const musicStart = 25;
 let musicStarted = false;
 musicAudio.addEventListener('loadedmetadata', () => {
   if (!musicStarted && musicAudio.duration > musicStart) musicAudio.currentTime = musicStart;
