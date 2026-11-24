@@ -36,34 +36,117 @@ main{width:100%;min-height:100svh;display:grid;place-items:center;padding:90px 1
 .calendar{display:inline-block;margin-top:22px;border-radius:30px;padding:13px 20px;background:linear-gradient(135deg,#c9cdd7,#858d9e);color:#fff;text-decoration:none;font-size:11px;letter-spacing:.6px;font-weight:600}.reset{display:block;margin:19px auto 0;background:none;border:0;color:#907d88;text-decoration:underline;cursor:pointer;font:11px Montserrat,sans-serif}
 .music{position:fixed;right:18px;top:18px;z-index:50;width:45px;height:45px;border-radius:50%;border:1px solid #aeb4c0;background:#ffffffc9;color:#737b89;cursor:pointer;font-size:20px}.music.playing{box-shadow:0 0 0 6px #c8ccd544}
 @media(max-width:390px){.card{padding:32px 22px 25px}.card h1{font-size:46px}.message{font-size:19px}}
-@media(prefers-reduced-motion:reduce){.scene *, .card{transition-duration:.01ms!important}}
+@media(prefers-reduced-motion:reduce){.scene *, .card{transition-duration:.01ms!important;transition-delay:0s!important}}
+:focus-visible{outline:2px solid #805b6c;outline-offset:4px}
+.card{max-height:calc(100svh - 100px);overflow-wrap:anywhere}.calendar{min-height:44px;display:inline-flex;align-items:center;justify-content:center}.reset{min-height:44px}
+@media(max-height:450px){main{padding:65px 18px 35px}.card{position:fixed;max-height:calc(100svh - 100px);top:calc(50% + 25px)}}
 </style>
 </head>
 <body>
 <button class="music" id="musicToggle" type="button" aria-label="Activar o pausar música" aria-pressed="false">♫</button>
 <main>
-<div class="scene" id="envelopeWrapper" role="button" tabindex="0" aria-label="Abrir preinvitación de Aitana">
+<div class="scene" id="envelopeWrapper" role="button" tabindex="0" aria-label="Abrir preinvitación de Aitana" aria-controls="letterCard" aria-expanded="false">
 <div class="envelope"><div class="back-fold"></div><div class="inner-letter"><strong>Aitana</strong><small>MIS XV AÑOS</small></div><div class="front"></div><div class="front-bottom"></div><div class="flap"></div><div class="seal"><span>A</span></div></div>
 <div class="instruction">Tocá el sello para abrir</div>
 </div>
-<section class="card" id="letterCard" aria-label="Preinvitación XV de Aitana" aria-hidden="true">
-<h1>Mis XV años</h1><div class="subtitle">AITANA</div><div class="line"></div><p class="message" id="typingText"></p>
+<section class="card" id="letterCard" inert aria-label="Preinvitación XV de Aitana" aria-hidden="true">
+<h1 tabindex="-1">Mis XV años</h1><div class="subtitle">AITANA</div><div class="line"></div><p class="message" id="typingText">Hay momentos en la vida que se vuelven inolvidables cuando se comparten con las personas que queremos. Reservá esta fecha para compartir conmigo una noche muy especial. ¡Próximamente recibirás la invitación formal!</p>
 <div class="date">SÁBADO · 13 · FEBRERO · 2027</div>
 <a class="calendar" id="calendarBtn" href="https://calendar.google.com/calendar/render?action=TEMPLATE&amp;text=XV%20de%20Aitana&amp;dates=20270213%2F20270214&amp;details=Reserv%C3%A1%20esta%20fecha%20para%20celebrar%20los%20XV%20de%20Aitana." target="_blank" rel="noopener">📅 Agregar a mi calendario</a>
 <button class="reset" id="resetBtn" type="button">Volver a cerrar el sobre</button>
 </section>
 </main>
 <script>
-const musicAudio=new Audio('musica.mp3');musicAudio.loop=true;musicAudio.preload='none';
-const musicBtn=document.getElementById('musicToggle');const wrapper=document.getElementById('envelopeWrapper');const card=document.getElementById('letterCard');const textEl=document.getElementById('typingText');
-const fullText='Hay momentos en la vida que se vuelven inolvidables cuando se comparten con las personas que queremos. Reservá esta fecha para compartir conmigo una noche muy especial. ¡Próximamente recibirás la invitación formal!';
-let opened=false,typingTimer=null,openTimer=null;
-async function playMusic(){try{await musicAudio.play();musicBtn.classList.add('playing');musicBtn.setAttribute('aria-pressed','true')}catch(e){musicBtn.classList.remove('playing');musicBtn.setAttribute('aria-pressed','false')}}
-musicBtn.addEventListener('click',()=>{if(musicAudio.paused)playMusic();else{musicAudio.pause();musicBtn.classList.remove('playing');musicBtn.setAttribute('aria-pressed','false')}});
-function typeText(){clearInterval(typingTimer);textEl.textContent='';let i=0;typingTimer=setInterval(()=>{textEl.textContent=fullText.slice(0,++i);if(i>=fullText.length)clearInterval(typingTimer)},24)}
-function openEnvelope(){if(opened)return;opened=true;playMusic();wrapper.classList.add('open');wrapper.setAttribute('aria-disabled','true');openTimer=setTimeout(()=>{card.classList.add('show');card.setAttribute('aria-hidden','false');typeText()},1850)}
-function resetEnvelope(){clearTimeout(openTimer);clearInterval(typingTimer);card.classList.remove('show');card.setAttribute('aria-hidden','true');textEl.textContent='';wrapper.classList.remove('open');wrapper.removeAttribute('aria-disabled');opened=false;wrapper.focus()}
-wrapper.addEventListener('click',openEnvelope);wrapper.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openEnvelope()}});document.getElementById('resetBtn').addEventListener('click',resetEnvelope);
+const musicAudio = new Audio('musica.mp3');
+musicAudio.loop = true;
+musicAudio.preload = 'none';
+const musicBtn = document.getElementById('musicToggle');
+const wrapper = document.getElementById('envelopeWrapper');
+const card = document.getElementById('letterCard');
+const textEl = document.getElementById('typingText');
+const fullText = textEl.textContent;
+const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+let opened = false, typingTimer = null, openTimer = null, musicWanted = false;
+function syncMusic() {
+  const playing = !musicAudio.paused && !musicAudio.ended;
+  musicBtn.classList.toggle('playing', playing);
+  musicBtn.setAttribute('aria-pressed', String(playing));
+}
+async function playMusic() {
+  musicWanted = true;
+  try {
+    await musicAudio.play();
+    if (!musicWanted) musicAudio.pause();
+  } catch (error) {
+    if (musicAudio.paused) musicWanted = false;
+  }
+  syncMusic();
+}
+function stopMusic() {
+  musicWanted = false;
+  musicAudio.pause();
+  syncMusic();
+}
+musicAudio.addEventListener('play', syncMusic);
+musicAudio.addEventListener('pause', syncMusic);
+musicAudio.addEventListener('error', () => {
+  musicWanted = false;
+  syncMusic();
+  musicBtn.title = 'No se pudo cargar la música';
+});
+musicBtn.addEventListener('click', () => {
+  if (musicWanted || !musicAudio.paused) stopMusic();
+  else playMusic();
+});
+function typeText() {
+  clearInterval(typingTimer);
+  if (reducedMotion.matches) { textEl.textContent = fullText; return; }
+  textEl.textContent = '';
+  let i = 0;
+  typingTimer = setInterval(() => {
+    textEl.textContent = fullText.slice(0, ++i);
+    if (i >= fullText.length) clearInterval(typingTimer);
+  }, 24);
+}
+function openEnvelope() {
+  if (opened) return;
+  opened = true;
+  playMusic();
+  wrapper.classList.add('open');
+  wrapper.setAttribute('aria-disabled', 'true');
+  wrapper.setAttribute('aria-expanded', 'true');
+  wrapper.tabIndex = -1;
+  openTimer = setTimeout(() => {
+    card.inert = false;
+    card.classList.add('show');
+    card.setAttribute('aria-hidden', 'false');
+    typeText();
+    card.querySelector('h1').focus({preventScroll:true});
+  }, reducedMotion.matches ? 0 : 1850);
+}
+function resetEnvelope() {
+  clearTimeout(openTimer);
+  clearInterval(typingTimer);
+  stopMusic();
+  card.classList.remove('show');
+  wrapper.classList.remove('open');
+  wrapper.removeAttribute('aria-disabled');
+  wrapper.setAttribute('aria-expanded', 'false');
+  wrapper.tabIndex = 0;
+  opened = false;
+  wrapper.focus({preventScroll:true});
+  card.inert = true;
+  card.setAttribute('aria-hidden', 'true');
+  textEl.textContent = fullText;
+}
+wrapper.addEventListener('click', openEnvelope);
+wrapper.addEventListener('keydown', e => {
+  if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openEnvelope(); }
+});
+document.getElementById('resetBtn').addEventListener('click', resetEnvelope);
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && opened) resetEnvelope();
+});
 </script>
 </body>
 </html>
