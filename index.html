@@ -61,6 +61,11 @@ html::-webkit-scrollbar, body::-webkit-scrollbar, .card::-webkit-scrollbar { dis
 <script>
 const musicAudio = new Audio('musica.mp3');
 musicAudio.loop = true;
+const musicStart = 35;
+let musicStarted = false;
+musicAudio.addEventListener('loadedmetadata', () => {
+  if (!musicStarted && musicAudio.duration > musicStart) musicAudio.currentTime = musicStart;
+});
 musicAudio.preload = 'auto';
 const musicBtn = document.getElementById('musicToggle');
 const wrapper = document.getElementById('envelopeWrapper');
@@ -77,7 +82,9 @@ function syncMusic() {
 async function playMusic() {
   musicWanted = true;
   try {
+    if (!musicStarted && musicAudio.readyState >= 1 && musicAudio.duration > musicStart) musicAudio.currentTime = musicStart;
     await musicAudio.play();
+    musicStarted = true;
     if (!musicWanted) musicAudio.pause();
   } catch (error) {
     if (musicAudio.paused) musicWanted = false;
@@ -130,6 +137,8 @@ function resetEnvelope() {
   clearTimeout(openTimer);
   clearInterval(typingTimer);
   stopMusic();
+  musicStarted = false;
+  if (musicAudio.readyState >= 1 && musicAudio.duration > musicStart) musicAudio.currentTime = musicStart;
   card.classList.remove('show');
   wrapper.classList.remove('open');
   wrapper.removeAttribute('aria-disabled');
